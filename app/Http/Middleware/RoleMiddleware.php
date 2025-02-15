@@ -1,24 +1,39 @@
-<?php 
+<?php
+
 namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 
 class RoleMiddleware
 {
-    public function handle(Request $request, Closure $next, $role = null)
+    /**
+     * Handle an incoming request.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
+     * @param  mixed ...$roles  One or more roles allowed to access the route.
+     * @return mixed
+     */
+    public function handle(Request $request, Closure $next, ...$roles)
     {
-        // Ensure user is authenticated
-        if (!Auth::check()) {
-            return response()->json(['error' => 'Unauthorized'], 401);
+        // Get the currently authenticated user (assuming JWT authentication is already set up).
+        $user = auth()->user();
+        
+        if (!$user) {
+            return response()->json(['message' => 'Unauthorized'], 401);
         }
-
-        // Check if role parameter is provided and matches the user's role
-        if ($role && Auth::user()->role !== $role) {
-            return response()->json(['error' => 'Forbidden - Access Denied'], 403);
+        
+        // Admin can do everything.
+        if ($user->role === 'admin') {
+            return $next($request);
         }
-
+        
+        // If no roles were provided, or the user's role is not in the allowed list, return a forbidden response.
+        if (empty($roles) || !in_array($user->role, $roles)) {
+            return response()->json(['message' => 'Forbidden'], 403);
+        }
+        
         return $next($request);
     }
 }
