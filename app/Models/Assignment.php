@@ -17,4 +17,8 @@ class Assignment extends Model
     public function counselor() {
         return $this->belongsTo(User::class, 'counselor_id');
     }
+
+    public function applications() {
+        return $this->hasMany(Application::class);
+    }
 }

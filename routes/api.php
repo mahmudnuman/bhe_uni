@@ -19,6 +19,7 @@ Route::group(['middleware' => ['jwt.auth']], function () {
     // Admin routes (requires 'admin' role)
     Route::group(['middleware' => ['role:admin']], function () {
         Route::get('/users', [UserController::class, 'index']);
+        Route::get('/counselors', [UserController::class, 'counselors']);
         Route::get('/users/{id}', [UserController::class, 'show']);
         Route::post('/users/{id}', [UserController::class, 'update']);
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
@@ -31,14 +32,14 @@ Route::group(['middleware' => ['jwt.auth']], function () {
         Route::post('/assign-lead', [AssignmentController::class, 'assignLead']);
         Route::get('/applications', [ApplicationController::class, 'index']);
         Route::get('/applications/{id}', [ApplicationController::class, 'show']);
-        Route::post('/applications/{id}', [ApplicationController::class, 'update']);
         Route::delete('/applications/{id}', [ApplicationController::class, 'destroy']);
     });
 
     // Counselor routes (requires 'counselor' role)
     Route::group(['middleware' => ['role:counselor']], function () {
-        Route::post('/leads/{id}/status', [LeadController::class, 'updateStatus']); // Update lead status
-        Route::post('/move-to-application', [ApplicationController::class, 'moveToApplication']); //
+        Route::post('/applications/{id}', [ApplicationController::class, 'update']);
+        Route::post('/assignments/status', [AssignmentController::class, 'updateStatus']);
+        Route::post('/move-to-application', [ApplicationController::class, 'moveToApplication']);
         Route::get('/reports/top-conversion-counselors', [ReportController::class, 'topConversionCounselors']);
         Route::get('/reports/leads-per-counselor', [ReportController::class, 'totalLeadsPerCounselor']);
         Route::get('/reports/most-active-counselor', [ReportController::class, 'mostActiveCounselor']);

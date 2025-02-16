@@ -7,8 +7,7 @@ return new class extends Migration {
     public function up() {
         Schema::create('applications', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('lead_id')->constrained('leads')->onDelete('cascade');
-            $table->foreignId('counselor_id')->constrained('users')->onDelete('cascade');
+            $table->foreignId('assignment_id')->constrained('assignments')->onDelete('cascade');
             $table->enum('status', ['In Progress', 'Approved', 'Rejected'])->default('In Progress');
             $table->timestamps();
         });

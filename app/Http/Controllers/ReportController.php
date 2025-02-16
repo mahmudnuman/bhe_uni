@@ -5,7 +5,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
-
+use App\Models\User;
 
 class ReportController extends Controller
 {
@@ -14,12 +14,12 @@ class ReportController extends Controller
      */
     public function totalLeadsPerCounselor()
     {
-        $results = DB::table('assignments')
-            ->select('counselor_id', DB::raw('COUNT(*) as total_leads'))
-            ->groupBy('counselor_id')
+        return User::where('role', 'counselor')
+            ->withCount(['assignments as total_leads' => function ($query) {
+                $query->select(DB::raw('count(distinct lead_id)'));
+            }])
             ->get();
-
-        return response()->json($results);
+    
     }
 
     /**
@@ -27,34 +27,23 @@ class ReportController extends Controller
      */
     public function topConversionCounselors()
     {
-        $results = DB::table('assignments as l')
-            ->leftJoin('applications as a', 'l.id', '=', 'a.lead_id')
-            ->select(
-                'l.counselor_id',
-                DB::raw('COUNT(a.id) as converted_leads'),
-                DB::raw('(COUNT(a.id) / COUNT(l.id)) * 100 as conversion_rate')
-            )
-            ->groupBy('l.counselor_id')
-            ->orderByDesc('conversion_rate')
-            ->get();
-
-        return response()->json($results);
+        return User::where('role', 'counselor')
+        ->withCount(['assignments as total_conversions' => function ($query) {
+            $query->whereHas('applications');
+        }])
+        ->orderByDesc('total_conversions')
+        ->get();    
     }
 
- public function mostActiveCounselor(): JsonResponse
+    public function mostActiveCounselor()
     {
-        $result = DB::table('applications')
-            ->where('created_at', '>=', Carbon::now()->subDays(30)) // Last 30 days
-            ->select('counselor_id', DB::raw('COUNT(*) as total_applications'))
-            ->groupBy('counselor_id')
-            ->orderByDesc('total_applications')
-            ->first(); // Get the topmost counselor
-
-        return response()->json([
-            'counselor_id' => $result ? $result->counselor_id : null,
-            'total_applications' => $result ? $result->total_applications : 0
-        ]);
-    
-}
-
+        return $report = User::where('role', 'counselor')
+        ->withCount(['assignments as total_conversions' => function ($query) {
+            $query->whereHas('applications', function ($q) {
+                $q->where('applications.created_at', '>=', now()->subDays(30));
+            });
+        }])
+        ->orderByDesc('total_conversions')
+        ->first();  
+    }
 }

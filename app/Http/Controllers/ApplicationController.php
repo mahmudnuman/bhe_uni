@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Application;
 use Illuminate\Http\Request;
+Use App\Models\Assignment;
 
 class ApplicationController extends Controller
 {
@@ -13,11 +14,17 @@ class ApplicationController extends Controller
     {
         $request->validate([
             'lead_id' => 'required|exists:leads,id',
-            'counselor_id' => 'required|exists:users,id',
             'status' => 'sometimes|in:In Progress,Approved,Rejected'
         ]);
 
-        $application = Application::create($request->all());
+        $assignment = Assignment::where([
+            'counselor_id' => auth()->user()->id,
+            'lead_id' => $request->input('lead_id')
+        ])->firstOrFail();
+
+        $application = Application::create([
+            'assignment_id' => $assignment->id
+        ]);
 
         return response()->json($application, 201);
     }

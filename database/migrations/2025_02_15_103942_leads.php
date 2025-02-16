@@ -12,8 +12,6 @@ return new class extends Migration {
             $table->string('phone')->nullable();
             $table->string('city')->nullable();
             $table->string('address')->nullable();
-            $table->enum('status', ['New', 'In Progress', 'Bad Timing', 'Not Interested', 'Not Qualified'])
-                  ->default('New');
             $table->timestamps();
         });
     }

@@ -10,7 +10,7 @@ use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use Notifiable;
+    use Notifiable, HasFactory;
 
     protected $fillable = [
         'id',
@@ -24,7 +24,7 @@ class User extends Authenticatable implements JWTSubject
 
     protected $casts = ['password' => 'hashed'];
 
-    public function assignments() {
+    public function leads() {
         return $this->hasMany(Assignment::class, 'counselor_id');
     }
 
@@ -38,5 +38,9 @@ class User extends Authenticatable implements JWTSubject
     public function getJWTCustomClaims()
     {
         return ['role' => $this->role];
+    }
+
+    public function assignments() {
+        return $this->hasMany(Assignment::class, 'counselor_id');
     }
 }

@@ -8,13 +8,20 @@ class Application extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['lead_id', 'counselor_id', 'status'];
+    protected $fillable = ['assignment_id', 'status'];
 
-    public function lead() {
-        return $this->belongsTo(Lead::class);
+    public function assignment()
+    {
+        return $this->belongsTo(Assignment::class);
     }
-
-    public function counselor() {
-        return $this->belongsTo(User::class, 'counselor_id');
+    
+    public function lead()
+    {
+        return $this->hasOneThrough(Lead::class, Assignment::class, 'id', 'id', 'assignment_id', 'lead_id');
+    }
+    
+    public function counselor()
+    {
+        return $this->hasOneThrough(User::class, Assignment::class, 'id', 'id', 'assignment_id', 'counselor_id');
     }
 }

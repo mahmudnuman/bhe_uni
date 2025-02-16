@@ -39,4 +39,9 @@ class UserController extends Controller
         return response()->json(['message' => 'User updated successfully', 'user' => $user]);
     }
 
+    public function counselors() {
+        $users = User::where('role', 'counselor')->get();
+        return response()->json($users);
+    }
+
 }
