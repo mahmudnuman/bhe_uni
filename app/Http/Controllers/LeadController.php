@@ -3,13 +3,24 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Lead;
+use App\Models\Assignment;
+
 
 class LeadController extends Controller
 {
     public function index(Request $request)
     {
+        $user = auth()->user(); // Get the authenticated user
         $query = Lead::query();
-
+    
+        // If the user is not an admin, filter leads assigned to them
+        if ($user->role !== 'admin') {
+            $query->whereHas('assignment', function ($q) use ($user) {
+                $q->where('counselor_id', $user->id);
+            });
+        }
+    
+        // Apply search filter if provided
         if ($request->has('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -18,11 +29,13 @@ class LeadController extends Controller
                   ->orWhere('phone', 'LIKE', "%$search%");
             });
         }
-
+    
+        // Get leads with pagination
         $leads = $query->latest()->paginate(10);
-
+    
         return response()->json($leads);
     }
+    
 
     public function store(Request $request)
     {

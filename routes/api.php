@@ -24,7 +24,6 @@ Route::group(['middleware' => ['jwt.auth']], function () {
         Route::post('/users/{id}', [UserController::class, 'update']);
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
 
-        Route::get('/leads', [LeadController::class, 'index']);
         Route::post('/leads', [LeadController::class, 'store']);
         Route::get('/leads/{id}', [LeadController::class, 'show']);
         Route::post('/leads/{id}', [LeadController::class, 'update']);
@@ -37,6 +36,7 @@ Route::group(['middleware' => ['jwt.auth']], function () {
 
     // Counselor routes (requires 'counselor' role)
     Route::group(['middleware' => ['role:counselor']], function () {
+        Route::get('/leads', [LeadController::class, 'index']);
         Route::post('/applications/{id}', [ApplicationController::class, 'update']);
         Route::post('/assignments/status', [AssignmentController::class, 'updateStatus']);
         Route::post('/move-to-application', [ApplicationController::class, 'moveToApplication']);
