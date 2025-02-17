@@ -67,6 +67,14 @@ The app should now be running at `http://localhost:8000` for the backend and `ht
 You can find the API documentation and test endpoints using Postman:  
 [Postman Collection](https://documenter.getpostman.com/view/8199471/2sAYXFhcUE)
 
+# DSA TASK 
+I have Added the function in this url of Postmen Collection
+
+{{base_url}}/api/reports/most-active-counselor
+
+Please look into the controller file to  verify it 
+
+
 ## Usage
 
 - Login with your credentials.
