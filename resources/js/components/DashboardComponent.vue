@@ -1,6 +1,7 @@
 <template>
   <div class="container">
     <h2>Welcome to the Dashboard</h2>
+    <button @click="goToKanbanBoard" class="btn btn-primary mb-3">Go to Kanban Board</button>
     <button @click="logout" class="btn btn-danger mb-3">Logout</button>
 
     <!-- Leads Table -->
@@ -206,6 +207,9 @@ export default {
     logout() {
       localStorage.removeItem('access_token');
       this.$router.push('/'); // Redirect to login page
+    },
+    goToKanbanBoard() {
+      this.$router.push('/kanban-board'); // Redirect to Kanban Board
     },
 
     // Fetch leads from the API

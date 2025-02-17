@@ -1,6 +1,8 @@
 <template>
   <div class="container">
     <h2>Welcome to the Dashboard</h2>
+    <router-link to="/kanban-board">Go to Kanban Board</router-link>
+
     <button @click="logout" class="btn btn-danger mb-3">Logout</button>
 
     <!-- Leads Table -->
@@ -198,6 +200,10 @@ export default {
       localStorage.removeItem('access_token');
       this.$router.push('/');
     },
+    goToKanbanBoard() {
+      this.$router.push('/kanban-board'); // Redirect to Kanban Board
+    },
+
 
     async fetchLeads() {
       try {
