@@ -21,6 +21,7 @@
         "datatables.net-bs4": "^2.2.2",
         "datatables.net-dt": "^2.2.2",
         "jquery": "^3.7.1",
+        "sweetalert2": "^11.17.2",
         "vue": "^3.5.13",
         "vue-router": "^4.5.0"
     }
