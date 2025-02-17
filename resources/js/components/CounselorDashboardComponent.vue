@@ -9,7 +9,7 @@
 
       <div class="d-flex justify-content-end mb-3">
         <button v-if="selectedLead" @click="openStatusModal" class="btn btn-secondary me-2">
-          Update Status
+          Update Lead Status
         </button>
         <button v-if="selectedLead" @click="openMoveToApplicationModal" class="btn btn-success">
           Move to Application
@@ -46,12 +46,12 @@
       </table>
     </div>
 
-    <!-- Update Status Modal -->
+    <!-- Update Lead Status Modal -->
     <div v-if="showStatusModal" class="modal fade show d-block" tabindex="-1" role="dialog">
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Update Status</h5>
+            <h5 class="modal-title">Update Lead Status</h5>
             <button type="button" class="close" @click="closeStatusModal">&times;</button>
           </div>
           <div class="modal-body">
@@ -86,11 +86,11 @@
       <div class="modal-dialog" role="document">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Move to Application</h5>
+            <h5 class="modal-title">Move Lead to Application</h5>
             <button type="button" class="close" @click="closeMoveToApplicationModal">&times;</button>
           </div>
           <div class="modal-body">
-            <label for="application-status">Select Application Status:</label>
+            <label for="move-status">Select Application Status:</label>
             <select v-model="selectedMoveToApplicationStatus" class="form-control">
               <option v-for="status in applicationStatuses" :key="status" :value="status">
                 {{ status }}
@@ -105,6 +105,61 @@
       </div>
     </div>
     <div v-if="showMoveToApplicationModal" class="modal-backdrop fade show"></div>
+
+    <!-- Application Status Section -->
+    <div v-if="applications.length > 0" class="mt-5">
+      <h4>Applications List</h4>
+      <table class="table table-bordered">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="application in applications" :key="application.id" 
+              @click="selectApplication(application)" 
+              :class="{ 'selected-row': selectedApplication && selectedApplication.id === application.id }">
+            <td>{{ application.lead.name }}</td>
+            <td>{{ application.lead.email }}</td>
+            <td>{{ application.status }}</td>
+            <td>
+              <button class="btn btn-info" @click="openApplicationStatusModal(application)">
+                Update Status
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Update Application Status Modal -->
+    <div v-if="showApplicationStatusModal" class="modal fade show d-block" tabindex="-1" role="dialog">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Update Application Status</h5>
+            <button type="button" class="close" @click="closeApplicationStatusModal">&times;</button>
+          </div>
+          <div class="modal-body">
+            <label for="application-status">Select Status:</label>
+            <select v-model="selectedApplicationStatus" class="form-control">
+              <option v-for="status in applicationStatuses" :key="status" :value="status">
+                {{ status }}
+              </option>
+            </select>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" @click="closeApplicationStatusModal">Close</button>
+            <button type="button" class="btn btn-primary" @click="updateApplicationStatus">Update Status</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div v-if="showApplicationStatusModal" class="modal-backdrop fade show"></div>
+
   </div>
 </template>
 
@@ -115,21 +170,27 @@ import Swal from 'sweetalert2';
 export default {
   data() {
     return {
-      base_url: 'http://127.0.0.1:8000', 
+      base_url: 'http://127.0.0.1:8000',
       leads: [],
+      applications: [],
       selectedLead: null,
-      selectedLeadStatus: '',  // Status for leads
-      selectedApplicationStatus: '',  // Status for applications
-      selectedMoveToApplicationStatus: '',  // Status for when moving lead to application
+      selectedApplication: null,
+      selectedLeadStatus: '',
+      selectedApplicationStatus: '',
+      selectedMoveToApplicationStatus: '',
       showStatusModal: false,
       showMoveToApplicationModal: false,
+      showApplicationStatusModal: false,
       leadStatuses: ['In Progress', 'Bad Timing', 'Not Interested', 'Not Qualified'],
-      applicationStatuses: ['In Progress', 'Approved', 'Rejected'],  // Correct application statuses
+      applicationStatuses: ['In Progress', 'Approved', 'Rejected'],
     };
   },
   computed: {
     isLeadSelected() {
       return this.selectedLead !== null;
+    },
+    isApplicationSelected() {
+      return this.selectedApplication !== null;
     }
   },
   methods: {
@@ -156,9 +217,32 @@ export default {
       }
     },
 
+    async fetchApplications() {
+      try {
+        const response = await axios.get(`${this.base_url}/api/applications`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+        });
+        this.applications = response.data;
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: 'Failed to fetch applications.',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        console.error('Error fetching applications:', error);
+      }
+    },
+
     selectLead(lead) {
       this.selectedLead = lead;
       this.selectedLeadStatus = lead.status;
+    },
+
+    selectApplication(application) {
+      this.selectedApplication = application;
+      this.selectedApplicationStatus = application.status;
     },
 
     openStatusModal() {
@@ -181,6 +265,15 @@ export default {
       this.showMoveToApplicationModal = false;
     },
 
+    openApplicationStatusModal(application) {
+      this.selectedApplicationStatus = application.status;
+      this.showApplicationStatusModal = true;
+    },
+
+    closeApplicationStatusModal() {
+      this.showApplicationStatusModal = false;
+    },
+
     async updateStatus() {
       if (!this.selectedLead) {
         Swal.fire({
@@ -194,40 +287,28 @@ export default {
       }
 
       try {
-        // If lead selected, update lead status
-        if (this.isLeadSelected) {
-          await axios.post(`${this.base_url}/api/assignments/status`, {
-            status: this.selectedLeadStatus,
-            lead_id: this.selectedLead.id,
-          }, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
-          });
-        }
-        // Else, update application status
-        else {
-          await axios.post(`${this.base_url}/api/assignments/application-status`, {
-            status: this.selectedApplicationStatus,
-            lead_id: this.selectedLead.id,
-          }, {
-            headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
-          });
-        }
+        await axios.post(`${this.base_url}/api/assignments/status`, {
+          status: this.selectedLeadStatus,
+          lead_id: this.selectedLead.id,
+        }, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+        });
 
         Swal.fire({
           icon: 'success',
-          title: 'Success!',
-          text: 'Status updated successfully!',
+          title: 'Status Updated!',
+          text: 'Lead status updated successfully.',
           timer: 2000,
           showConfirmButton: false,
         });
 
-        this.showStatusModal = false;
-        this.fetchLeads();  // Refresh lead data after status update
+        this.fetchLeads();
+        this.closeStatusModal();
       } catch (error) {
         Swal.fire({
           icon: 'error',
-          title: 'Update Failed!',
-          text: 'Something went wrong while updating the status.',
+          title: 'Error!',
+          text: 'Failed to update status.',
           timer: 2000,
           showConfirmButton: false,
         });
@@ -248,7 +329,7 @@ export default {
       }
 
       try {
-        await axios.post(`${this.base_url}/api/move-to-application`, {
+        await axios.post(`${this.base_url}/api/applications`, {
           lead_id: this.selectedLead.id,
           status: this.selectedMoveToApplicationStatus,
         }, {
@@ -257,38 +338,78 @@ export default {
 
         Swal.fire({
           icon: 'success',
-          title: 'Success!',
-          text: 'Lead moved to application successfully!',
+          title: 'Lead Moved!',
+          text: 'Lead has been successfully moved to applications.',
           timer: 2000,
           showConfirmButton: false,
         });
 
-        this.showMoveToApplicationModal = false;
         this.fetchLeads();
+        this.fetchApplications();
+        this.closeMoveToApplicationModal();
       } catch (error) {
         Swal.fire({
           icon: 'error',
-          title: 'Move Failed!',
-          text: 'Something went wrong while moving the lead.',
+          title: 'Error!',
+          text: 'Failed to move lead.',
           timer: 2000,
           showConfirmButton: false,
         });
-        console.error('Error moving lead:', error);
+        console.error('Error moving lead to application:', error);
       }
-    }
+    },
+
+    async updateApplicationStatus() {
+      if (!this.selectedApplication) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'No Application Selected!',
+          text: 'Please select an application first.',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        return;
+      }
+
+      try {
+        const applicationId = this.selectedApplication.id;
+        await axios.post(`${this.base_url}/api/applications/${applicationId}`, {
+          status: this.selectedApplicationStatus,
+        }, {
+          headers: { Authorization: `Bearer ${localStorage.getItem('access_token')}` },
+        });
+
+        Swal.fire({
+          icon: 'success',
+          title: 'Application Status Updated!',
+          text: 'Application status updated successfully.',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+
+        this.fetchApplications();
+        this.closeApplicationStatusModal();
+      } catch (error) {
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: 'Failed to update application status.',
+          timer: 2000,
+          showConfirmButton: false,
+        });
+        console.error('Error updating application status:', error);
+      }
+    },
   },
   mounted() {
     this.fetchLeads();
+    this.fetchApplications();
   }
 };
 </script>
 
-<style>
+<style scoped>
 .selected-row {
-  background-color: #d0ebff !important;
-  font-weight: bold;
-}
-.modal {
-  background: rgba(0, 0, 0, 0.5);
+  background-color: #d1e7dd;
 }
 </style>

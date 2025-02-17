@@ -37,6 +37,7 @@ Route::group(['middleware' => ['jwt.auth']], function () {
     // Counselor routes (requires 'counselor' role)
     Route::group(['middleware' => ['role:counselor']], function () {
         Route::get('/leads', [LeadController::class, 'index']);
+        Route::get('/applications', [ApplicationController::class, 'index']);
         Route::post('/applications/{id}', [ApplicationController::class, 'update']);
         Route::post('/assignments/status', [AssignmentController::class, 'updateStatus']);
         Route::post('/move-to-application', [ApplicationController::class, 'moveToApplication']);

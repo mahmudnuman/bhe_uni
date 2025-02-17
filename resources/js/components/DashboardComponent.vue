@@ -41,6 +41,7 @@
           </tr>
         </thead>
         <tbody>
+          <!-- Bind the selected-row class conditionally -->
           <tr 
             v-for="lead in leads" 
             :key="lead.id" 
@@ -172,12 +173,13 @@
         </div>
       </div>
     </div>
+    <div v-else>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios';
-import Swal from 'sweetalert2';  // Import SweetAlert2
 
 export default {
   data() {
@@ -200,45 +202,52 @@ export default {
     };
   },
   methods: {
+    // Logout function to clear the token and redirect to login page
     logout() {
       localStorage.removeItem('access_token');
       this.$router.push('/'); // Redirect to login page
     },
 
+    // Fetch leads from the API
     async fetchLeads() {
+      const base_url = 'http://127.0.0.1:8000'; // API base URL
       try {
-        const response = await axios.get(`${this.base_url}/api/leads`, {
+        const response = await axios.get(`${base_url}/api/leads`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
         });
-        this.leads = response.data.data;
+        this.leads = response.data.data; // Store the leads in the component's data
       } catch (error) {
         console.error('Error fetching leads:', error);
       }
     },
 
+    // Fetch counselors from the API
     async fetchCounselors() {
+      const base_url = 'http://127.0.0.1:8000'; // API base URL
       try {
-        const response = await axios.get(`${this.base_url}/api/counselors`, {
+        const response = await axios.get(`${base_url}/api/counselors`, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
         });
-        this.counselors = response.data;
+        this.counselors = response.data; // Store the counselors in the component's data
       } catch (error) {
         console.error('Error fetching counselors:', error);
       }
     },
 
+    // Create a new lead
     async createLead() {
+      const base_url = 'http://127.0.0.1:8000'; // API base URL
       try {
-        await axios.post(`${this.base_url}/api/leads/`, this.newLead, {
+        await axios.post(`${base_url}/api/leads/`, this.newLead, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
         });
-        Swal.fire('Success!', 'Lead created successfully!', 'success');
+        alert('Lead created successfully!');
         this.fetchLeads();
         this.closeCreateModal();
       } catch (error) {
@@ -246,44 +255,53 @@ export default {
       }
     },
 
+    // Open modal to create a lead
     openCreateModal() {
       this.showCreateModal = true;
     },
 
+    // Close modal for creating a lead
     closeCreateModal() {
       this.showCreateModal = false;
-      this.newLead = { name: '', email: '', phone: '', city: '', address: '' };
+      this.newLead = { name: '', email: '', phone: '', city: '', address: '' }; // Clear the form
     },
 
+    // Select a lead
     selectLead(lead) {
       this.selectedLead = lead;
     },
 
+    // Open modal to edit lead
     openModal(lead) {
       this.selectedLead = { ...lead };
       this.showModal = true;
     },
 
+    // Open modal to assign a counselor
     openAssignModal() {
       this.showAssignModal = true;
     },
 
+    // Close modal for editing lead
     closeModal() {
       this.showModal = false;
     },
 
+    // Close modal for assigning counselor
     closeAssignModal() {
       this.showAssignModal = false;
     },
 
+    // Update lead details
     async updateLead() {
+      const base_url = 'http://127.0.0.1:8000'; // API base URL
       try {
-        await axios.post(`${this.base_url}/api/leads/${this.selectedLead.id}`, this.selectedLead, {
+        await axios.post(`${base_url}/api/leads/${this.selectedLead.id}`, this.selectedLead, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('access_token')}`,
           },
         });
-        Swal.fire('Success!', 'Lead updated successfully!', 'success');
+        alert('Lead updated successfully!');
         this.fetchLeads();
         this.closeModal();
       } catch (error) {
@@ -291,24 +309,33 @@ export default {
       }
     },
 
+    // Assign counselor to lead
     async assignCounselor() {
-      try {
-        await axios.post(`${this.base_url}/api/assign-lead/`, {
-          lead_id: this.selectedLead.id,
-          counselor_id: this.selectedCounselor,
-        }, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('access_token')}`,
-          },
-        });
+     try {
+    // Send POST request with the correct URL and request body
+    await axios.post(`${this.base_url}/api/assign-lead/`, {
+      lead_id: this.selectedLead.id,    // Use selectedLead.id for lead_id
+      counselor_id: this.selectedCounselor,  // Use selectedCounselor for counselor_id
+    }, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('access_token')}`,  // Use the token for authorization
+      },
+    });
 
-        Swal.fire('Success!', 'Counselor assigned successfully!', 'success');
-        this.fetchLeads();
-        this.closeAssignModal();
-      } catch (error) {
-        console.error('Error assigning counselor:', error);
-      }
-    },
+    // Show success message
+    alert('Counselor assigned successfully!');
+
+    // Refresh the leads list
+    this.fetchLeads();
+
+    // Close the modal
+    this.closeAssignModal();
+  } catch (error) {
+    // Handle any error
+    console.error('Error assigning counselor:', error);
+  }
+}
+
   },
   mounted() {
     this.fetchLeads();
@@ -318,8 +345,20 @@ export default {
 </script>
 
 <style scoped>
-/* Your existing styles here */
+.modal-content {
+  width: 500px;
+}
+
+.modal-header {
+  background-color: #f8f9fa;
+}
+
+button {
+  margin-right: 10px;
+}
+
+/* Add this class for the selected row */
 .selected-row {
-  background-color: #d1ecf1;
+  background-color: #d1ecf1; /* Light blue background for selected row */
 }
 </style>
